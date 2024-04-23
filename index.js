@@ -24,7 +24,11 @@ const productSchema = mongoose.Schema({
 const Product = mongoose.model("Products", productSchema);
 
 app.get(`${api}/products`, async (req, res) => {
-  let getAllProducts = await Product.find();
+  let productsList = await Product.find();
+  if (!productsList) {
+    res.status(501).json({ success: false });
+  }
+
   res.send(getAllProducts);
 });
 
