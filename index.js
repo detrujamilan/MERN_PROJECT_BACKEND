@@ -3,6 +3,7 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 const connect = require("./config/db");
 const morgan = require("morgan");
+const { Product } = require("./models/product");
 const app = express();
 
 require("dotenv/config");
@@ -12,16 +13,7 @@ app.use(express.json());
 app.use(cors());
 app.use(morgan("tiny"));
 
-const productSchema = mongoose.Schema({
-  name: String,
-  image: String,
-  countInStock: {
-    type: Number,
-    required: true,
-  },
-});
 
-const Product = mongoose.model("Products", productSchema);
 
 app.get(`${api}/products`, async (req, res) => {
   let productsList = await Product.find();
@@ -29,7 +21,7 @@ app.get(`${api}/products`, async (req, res) => {
     res.status(501).json({ success: false });
   }
 
-  res.send(getAllProducts);
+  res.send(productsList);
 });
 
 app.post(`${api}/products`, (req, res) => {
