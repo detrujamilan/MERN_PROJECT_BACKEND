@@ -7,7 +7,7 @@ const app = express();
 
 // middleware
 app.use(express.json());
-app.use(cors());
+app.use("*",cors());
 app.use(morgan("tiny"));
 
 let baseUrl = process.env.APP_URL;

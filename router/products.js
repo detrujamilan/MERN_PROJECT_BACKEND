@@ -6,7 +6,7 @@ router.get(`/`, async (req, res) => {
   const productList = await Product.find();
 
   if (!productList) {
-    res.status(500).json({ success: false });
+    res.status(500).json({ message: "Failed to fetch product list." });
   }
   res.send(productList);
 });
@@ -25,8 +25,7 @@ router.post(`/`, (req, res) => {
     })
     .catch((err) => {
       res.status(500).json({
-        error: err,
-        success: false,
+        message: "Failed to create product."
       });
     });
 });
