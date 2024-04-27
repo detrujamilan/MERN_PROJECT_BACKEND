@@ -4,11 +4,16 @@ const connect = require("./config/db");
 const morgan = require("morgan");
 require("dotenv/config");
 const app = express();
+const authJwt = require("./helpers/jwt");
+const errorHandler = require("./helpers/error-hendler");
+
 
 // middleware
 app.use(express.json());
-app.use("*",cors());
+app.use("*", cors());
 app.use(morgan("tiny"));
+app.use(authJwt());
+app.use(errorHandler);
 
 let baseUrl = process.env.APP_URL;
 

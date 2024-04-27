@@ -7,6 +7,9 @@ const categorySchema = mongoose.Schema({
   },
   icon: { type: String },
   color: { type: String },
+  image: {
+    type: String,
+  },
 });
 
 exports.Category = mongoose.model("Category", categorySchema);
