@@ -5,7 +5,7 @@ const bcrypt = require("bcrypt");
 const jsonWebToken = require("jsonwebtoken");
 
 router.get(`/`, async (req, res) => {
-  const userList = await User.find().select("-passwordHash");
+  const userList = await User.find().select("-password");
 
   if (!userList) {
     res.status(404).json({ message: "No users found." });
@@ -21,7 +21,7 @@ router.post(`/`, async (req, res) => {
   let user = new User({
     name: req.body.name,
     email: req.body.email,
-    passwordHash: bcrypt.hashSync(req.body.passwordHash, 10),
+    password: await bcrypt.hashSync(req.body.password, 10),
   });
 
   user = await user.save(user);
@@ -33,7 +33,7 @@ router.post(`/`, async (req, res) => {
 });
 
 router.get(`/:id`, async (req, res) => {
-  let user = await User.findById(req.params.id).select("-passwordHash");
+  let user = await User.findById(req.params.id).select("-password");
 
   if (!user) {
     res.status(404).json({ message: "User not found." });
@@ -52,11 +52,12 @@ router.post("/login", async (req, res) => {
     });
   }
 
-  if (user && bcrypt.compareSync(req.body.passwordHash, user.passwordHash)) {
+  if (user && await bcrypt.compareSync(req.body.password, user.password)) {
     let secret = process.env.secret;
     let token = jsonWebToken.sign(
       {
         userId: user.id,
+        isAdmin: user.isAdmin,
       },
       secret,
       { expiresIn: "1d" }

@@ -6,12 +6,14 @@ const userSchema = mongoose.Schema({
     required: true,
   },
   email: { type: String, required: true },
-  passwordHash: {
+  password: {
     type: String,
     required: true,
   },
+  isAdmin: {
+    type: Boolean,
+    default: false,
+  },
 });
 
-
-
-exports.User = mongoose.model("User", userSchema);
+exports.User =  mongoose.model("User", userSchema);
