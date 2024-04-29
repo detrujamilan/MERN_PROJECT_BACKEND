@@ -52,7 +52,7 @@ router.post("/login", async (req, res) => {
     });
   }
 
-  if (user && await bcrypt.compareSync(req.body.password, user.password)) {
+  if (user && (await bcrypt.compareSync(req.body.password, user.password))) {
     let secret = process.env.secret;
     let token = jsonWebToken.sign(
       {
@@ -70,6 +70,52 @@ router.post("/login", async (req, res) => {
     res.status(401).json({
       message: "Invalid email or password. Please try again.",
     });
+  }
+});
+
+router.post("/register", async (req, res) => {
+  let createUser = new User({
+    name: req.body.name,
+    email: req.body.email,
+    password: req.body.password,
+  });
+
+  createUser = await createUser.save();
+
+  if (!createUser) {
+    res.status(401).json({ message: "User registration failed." });
+  }
+
+  res
+    .status(201)
+    .json({ message: "User registered successfully.", user: createUser });
+});
+
+router.delete("/:id", async (req, res) => {
+  User.findByIdAndDelete(req.params.id)
+    .then((user) => {
+      if (!user) {
+        res.status(404).json({ message: "User not found." });
+      } else {
+        res.status(200).json({ message: "User deleted successfully." });
+      }
+    })
+    .catch((err) => {
+      res.status(500).json({ error: err.message });
+    });
+});
+
+router.get(`/get/count`, async (req, res) => {
+  try {
+    let totalUsers = await User.countDocuments();
+    if (!totalUsers) {
+      res.status(404).json({ message: "No User found." });
+    }
+    return res.status(200).json({
+      totalUsers: totalUsers,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
 

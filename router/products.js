@@ -36,4 +36,34 @@ router.post(`/`, (req, res) => {
     });
 });
 
+router.delete(`/:id`, (req, res) => {
+  Product.findByIdAndDelete(req.params.id)
+    .then((product) => {
+      if (!product) {
+        res.status(404).json({ message: "Product not found." });
+      } else {
+        res.status(200).json({ message: "Product deleted successfully." });
+      }
+    })
+    .catch((err) => {
+      res.status(500).json({
+        error: err.message,
+      });
+    });
+});
+
+router.get(`/get/count`, async (req, res) => {
+  try {
+    let totalProducts = await Product.countDocuments();
+    if (!totalProducts) {
+      res.status(404).json({ message: "No products found." });
+    }
+    return res.status(200).json({
+      totalProducts: totalProducts,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;
