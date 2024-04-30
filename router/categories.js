@@ -3,12 +3,15 @@ const express = require("express");
 const router = express.Router();
 
 router.get(`/`, async (req, res) => {
+
   const categoryList = await Category.find();
 
   if (!categoryList) {
     res.status(500).json({ message: "Failed to fetch category list." });
   }
+
   res.send(categoryList);
+
 });
 
 
