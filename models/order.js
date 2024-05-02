@@ -1,40 +1,38 @@
-const { VirtualType } = require("mongoose");
 const mongoose = require("mongoose");
 
 const orderSchema = mongoose.Schema({
   orderItems: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: "orderItems",
-    required: false,
+    ref: "OrderItem", 
   }],
   shippingAddress1: {
     type: String,
-    require: true,
+    required: true,
   },
   shippingAddress2: {
     type: String,
-    require: true,
+    required: true,
   },
   city: {
     type: String,
-    require: true,
+    required: true,
   },
   zipCode: {
     type: String,
-    require: true,
+    required: true,
   },
   country: {
     type: String,
-    require: true,
+    required: true,
   },
   phone: {
     type: Number,
-    require: true,
+    required: true,
   },
   status: {
     type: String,
-    require: true,
-    default: "Padding",
+    required: true,
+    default: "Pending",
   },
   totalPrice: {
     type: Number,

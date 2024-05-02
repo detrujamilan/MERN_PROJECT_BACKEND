@@ -1,3 +1,4 @@
+
 const mongoose = require('mongoose');
 
 const orderItemSchema = mongoose.Schema({
@@ -11,5 +12,4 @@ const orderItemSchema = mongoose.Schema({
     }
 })
 
-exports.OrderItem = mongoose.model('OrderItem', orderItemSchema);
-
+exports.orderItem = mongoose.model('OrderItem', orderItemSchema);
