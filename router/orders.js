@@ -18,7 +18,7 @@ router.post(`/:id`, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
       .populate("user", "name")
-      .populate({path:"orderItems",populate:"product"});
+      .populate({ path: "orderItems", populate: { path: "product" ,populate:""} });
 
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
