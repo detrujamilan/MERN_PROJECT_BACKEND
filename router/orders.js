@@ -1,7 +1,6 @@
 const { Order } = require("../models/order");
+const { orderItem } = require("../models/order-item");
 const express = require("express");
-const { OrderItem } = require("../models/order-item");
-const { populate } = require("dotenv");
 const router = express.Router();
 
 router.get(`/`, async (req, res) => {
@@ -18,7 +17,7 @@ router.post(`/:id`, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
       .populate("user", "name")
-      .populate({ path: "orderItems", populate: { path: "product" ,populate:""} });
+      .populate({ path: "orderItems", populate: { path: "product", populate: "" } });
 
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
@@ -34,7 +33,7 @@ router.post(`/:id`, async (req, res) => {
 router.post(`/`, async (req, res) => {
   const orderItemsId = Promise.all(
     req.body.orderItems.map(async (Items) => {
-      let newOrderItem = new OrderItem({
+      let newOrderItem = new orderItem({
         quantity: Items.quantity,
         product: Items.product,
       });
@@ -70,15 +69,38 @@ router.post(`/`, async (req, res) => {
 });
 
 
-router.delete('/:id', async (req, res) => {
-  Order.findByIdAndDelete(req.params.id)
-    .then((order) => {
-      if (!order) {
-        res.status(404).json({ message: "Order not found" });
-      } else {
-        res.status(200).json({ message: "Order deleted successfully" });
-      }
+router.put("/:id", async (req, res) => {
+  try {
+    const updateStatus = await Order.findByIdAndUpdate(req.params.id,
+      {
+        status: req.body.status
+      }, {
+      new: true
+    }
+    )
 
+    if (!updateStatus) {
+      res.status(404).json({ success: false, message: "Order not found" });
+    }
+    return res.status(200).json({ message: "Order status updated successfully", });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error });
+  }
+})
+
+
+
+router.delete('/:id', async (req, res) => {
+  Order.findByIdAndRemove(req.params.id)
+    .then(async (order) => {
+      if (order) {
+        await order.orderItems.map(async item => {
+          await orderItem.findByIdAndRemove(item)
+        })
+        res.status(200).json({ message: "Order deleted successfully" });
+      } else {
+        res.status(404).json({ message: "Order not found" });
+      }
     }).catch((err) => {
       res.status(500).json({ message: err.message });
     })

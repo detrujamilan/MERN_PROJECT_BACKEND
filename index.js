@@ -22,12 +22,14 @@ const productsRoutes = require("./router/products");
 const categoriesRoutes = require("./router/categories");
 const ordersRoutes = require("./router/orders");
 const usersRoutes = require("./router/users");
+const orderItemsRouter = require("./router/orderItem");
 
 // models
 app.use(`${baseUrl}/categories`, categoriesRoutes);
 app.use(`${baseUrl}/products`, productsRoutes);
 app.use(`${baseUrl}/users`, usersRoutes);
 app.use(`${baseUrl}/orders`, ordersRoutes);
+app.use(`${baseUrl}/orderItems`, orderItemsRouter);
 
 const port = 3001;
 
