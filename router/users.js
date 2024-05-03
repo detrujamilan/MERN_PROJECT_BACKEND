@@ -11,7 +11,6 @@ router.get(`/`, async (req, res) => {
     res.status(404).json({ message: "No users found." });
   }
   res.status(200).json({
-    success: true,
     message: "User list fetched successfully.",
     userList,
   });
@@ -21,7 +20,7 @@ router.post(`/`, async (req, res) => {
   let user = new User({
     name: req.body.name,
     email: req.body.email,
-    password: await bcrypt.hashSync(req.body.password, 10),
+    password: bcrypt.hash(req.body.password, 10),
   });
 
   user = await user.save(user);
@@ -52,7 +51,7 @@ router.post("/login", async (req, res) => {
     });
   }
 
-  if (user && (await bcrypt.compareSync(req.body.password, user.password))) {
+  if (user && await bcrypt.compare(req.body.password, user.password)) {
     let secret = process.env.secret;
     let token = jsonWebToken.sign(
       {
