@@ -1,4 +1,5 @@
 const { Product } = require("../models/product");
+const { Category } = require("../models/category");
 const express = require("express");
 const router = express.Router();
 
@@ -13,11 +14,18 @@ router.get(`/`, async (req, res) => {
     .json({ message: "Product list fetched successfully.", productList });
 });
 
-router.post(`/`, (req, res) => {
+router.post(`/`, async (req, res) => {
+
+  const categoryId = await Category.findById(req.body.category)
+  if (!categoryId) {
+    res.status(500).json({ message: "Failed to fetch category list." });
+  }
   const product = new Product({
     name: req.body.name,
     price: req.body.price,
     countInStock: req.body.countInStock,
+    category: req.body.category,
+    description: req.body.description
   });
 
   product
@@ -51,6 +59,16 @@ router.delete(`/:id`, (req, res) => {
       });
     });
 });
+
+router.get('/:id', async (req, res) => {
+  const productList = await Product.findById(req.params.id)
+
+  if (!productList) {
+    res.status(500).json({ message: "Failed to fetch product list." });
+  }
+
+  res.send(productList)
+})
 
 router.get(`/get/count`, async (req, res) => {
   try {

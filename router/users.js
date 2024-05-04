@@ -51,7 +51,9 @@ router.post("/login", async (req, res) => {
     });
   }
 
-  if (user && await bcrypt.compare(req.body.password, user.password)) {
+  let bcryptPassword = await bcrypt.compare(req.body.password, user.password)
+
+  if (user && bcryptPassword) {
     let secret = process.env.secret;
     let token = jsonWebToken.sign(
       {
@@ -76,7 +78,7 @@ router.post("/register", async (req, res) => {
   let createUser = new User({
     name: req.body.name,
     email: req.body.email,
-    password: req.body.password,
+    password: bcrypt.hashSync(req.body.password, 10),
   });
 
   createUser = await createUser.save();

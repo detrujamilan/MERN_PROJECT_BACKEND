@@ -39,6 +39,29 @@ router.post("/", async (req, res) => {
   res.send(category);
 });
 
+router.put("/:id", async (req, res) => {
+  try {
+    const categoryUpdate = await Category.findByIdAndUpdate(req.params.id, {
+      name: req.body.name,
+      icon: req.body.icon || categoryUpdate.icon,
+      color: req.body.color,
+    }, { new: true }
+    )
+
+    if (!categoryUpdate) {
+      return res.status(400).send('the category cannot be created!')
+    }
+
+    return res.send(categoryUpdate)
+  } catch (error) {
+    res.status().json({ message: error })
+  }
+
+
+})
+
+
+
 router.delete("/:id", (req, res) => {
   Category.findByIdAndDelete(req.params.id)
     .then((category) => {

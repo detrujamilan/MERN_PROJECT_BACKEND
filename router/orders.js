@@ -80,31 +80,33 @@ router.put("/:id", async (req, res) => {
     )
 
     if (!updateStatus) {
-      res.status(404).json({ success: false, message: "Order not found" });
+      res.status(404).json({ message: "Order not found" });
     }
     return res.status(200).json({ message: "Order status updated successfully", });
   } catch (error) {
-    res.status(500).json({ success: false, message: error });
+    res.status(500).json({ message: error });
   }
 })
 
 
 
 router.delete('/:id', async (req, res) => {
-  Order.findByIdAndRemove(req.params.id)
-    .then(async (order) => {
-      if (order) {
-        await order.orderItems.map(async item => {
-          await orderItem.findByIdAndRemove(item)
-        })
-        res.status(200).json({ message: "Order deleted successfully" });
-      } else {
-        res.status(404).json({ message: "Order not found" });
-      }
-    }).catch((err) => {
-      res.status(500).json({ message: err.message });
-    })
-})
+  try {
+    const order = await Order.findByIdAndDelete(req.params.id);
+    if (order) {
+      await Promise.all(order.orderItems.map(async (item) => {
+        await orderItem.findByIdAndDelete(item);
+      }));
+      res.status(200).json({ message: "Order deleted successfully" });
+    } else {
+      res.status(404).json({ message: "Order not found" });
+    }
+  } catch (error) {
+    res.status(500).json({
+      message: error.message
+    });
+  }
+});
 
 module.exports = router;
 
