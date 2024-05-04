@@ -136,7 +136,7 @@ router.get("/get/totalsales", async (req, res) => {
     if (!totalSales) {
       res.status(400).json({ message: "The Order sales cannot be generated" });
     }
-    res.send({totalSales:totalSales.pop().totalsales});
+    res.send({ totalSales: totalSales.pop().totalsales });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
