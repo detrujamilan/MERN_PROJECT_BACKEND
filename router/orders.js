@@ -3,6 +3,9 @@ const { orderItem } = require("../models/order-item");
 const express = require("express");
 const router = express.Router();
 
+
+
+
 router.get(`/`, async (req, res) => {
   const orderList = await Order.find()
     .populate("user", "name")
@@ -131,7 +134,7 @@ router.delete("/:id", async (req, res) => {
 router.get("/get/totalsales", async (req, res) => {
   try {
     const totalSales = await Order.aggregate([
-      { $group: { _id: null, totalsales: { $sum: "$totalPice" } } },
+      { $group: { _id: null, totalsales: { $sum: "$totalPrice" } } },
     ]);
     if (!totalSales) {
       res.status(400).json({ message: "The Order sales cannot be generated" });
@@ -141,5 +144,19 @@ router.get("/get/totalsales", async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 });
+
+router.get("/get/userOrder/:userId", async (req, res) => {
+  const userOrderList = await Order.find({ user: req.params.userId }).populate({
+    path: "orderItems",
+    populate: { path: "product", populate: "category" },
+  })
+
+  if (!userOrderList) {
+    res.status(404).send({
+      message: "No orders found for the specified user."
+    });
+  }
+  res.send(userOrderList)
+})
 
 module.exports = router;

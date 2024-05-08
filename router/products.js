@@ -2,6 +2,19 @@ const { Product } = require("../models/product");
 const { Category } = require("../models/category");
 const express = require("express");
 const router = express.Router();
+const multer = require("multer");
+
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "public/uploads");
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname.split(" ").join("-"));
+  },
+})
+
+const uploadOptions = multer({ storage: storage })
 
 router.get(`/`, async (req, res) => {
   const productList = await Product.find();
@@ -14,18 +27,27 @@ router.get(`/`, async (req, res) => {
     .json({ message: "Product list fetched successfully.", productList });
 });
 
-router.post(`/`, async (req, res) => {
+router.post(`/`, uploadOptions.single("image"), async (req, res) => {
 
   const categoryId = await Category.findById(req.body.category)
-  if (!categoryId) {
-    res.status(500).json({ message: "Failed to fetch category list." });
-  }
+  if (!categoryId) res.status(500).json({ message: "Failed to fetch category list." });
+
+  const file = req.file;
+  if (!file) return res.status(500).json({ message: "Image File not found." })
+
+  const fileName = req.file.originalname.split(" ").join("-")
+  console.log(fileName, "fileName")
+
+  const basePath = `${req.protocol}://${req.get('host')}/public/uploads/`
+
+
   const product = new Product({
     name: req.body.name,
     price: req.body.price,
     countInStock: req.body.countInStock,
     category: req.body.category,
-    description: req.body.description
+    description: req.body.description,
+    image: `${basePath}${fileName}`,
   });
 
   product
