@@ -3,18 +3,32 @@ const { Category } = require("../models/category");
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
+const { default: mongoose } = require("mongoose");
+
+const IMG_FILE_TYPE = {
+  "image/jpeg": "jpeg",
+  "image/jpg": "jpg",
+  "image/png": "png",
+}
 
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "public/uploads");
+    const isValid = IMG_FILE_TYPE[file.mimetype]
+    let uploadError = new Error("Image upload error")
+    if (isValid) {
+      uploadError = null
+    }
+    cb(uploadError, "public/uploads");
   },
   filename: function (req, file, cb) {
-    cb(null, file.originalname.split(" ").join("-"));
+    const fileName = file.originalname.split(" ").join("-")
+    const extension = IMG_FILE_TYPE[file.mimetype]
+    cb(null, `${fileName}-${Date.now()}.${extension}`);
   },
 })
 
-const uploadOptions = multer({ storage: storage })
+const uploadOptions = multer({ storage: storage });
 
 router.get(`/`, async (req, res) => {
   const productList = await Product.find();
@@ -26,6 +40,41 @@ router.get(`/`, async (req, res) => {
     .status(200)
     .json({ message: "Product list fetched successfully.", productList });
 });
+
+
+router.put("/:id", async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    res.status(500).json({ message: "Failed to fetch product Id." });
+  }
+
+  const file = req.file;
+  let imageUpload;
+  if (file) {
+    const fileName = file.originalname.split(" ").join("-")
+    const basePath = `${req.protocol}://${req.get('host')}/public/uploads/`
+    imageUpload = `${basePath}${fileName}`
+  }
+
+
+  const product = await Product.findByIdAndUpdate(
+    req.params.id, {
+    name: req.body.name,
+    price: req.body.price,
+    countInStock: req.body.countInStock,
+    category: req.body.category,
+    description: req.body.description,
+    image: imageUpload
+  }
+  )
+
+  if (!product) {
+    res.status(404).json({ message: "Product not found." });
+  }
+
+  return express.response.send(product);
+
+
+})
 
 router.post(`/`, uploadOptions.single("image"), async (req, res) => {
 
