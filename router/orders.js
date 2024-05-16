@@ -3,9 +3,6 @@ const { orderItem } = require("../models/order-item");
 const express = require("express");
 const router = express.Router();
 
-
-
-
 router.get(`/`, async (req, res) => {
   const orderList = await Order.find()
     .populate("user", "name")
@@ -149,14 +146,24 @@ router.get("/get/userOrder/:userId", async (req, res) => {
   const userOrderList = await Order.find({ user: req.params.userId }).populate({
     path: "orderItems",
     populate: { path: "product", populate: "category" },
-  })
+  });
 
   if (!userOrderList) {
     res.status(404).send({
-      message: "No orders found for the specified user."
+      message: "No orders found for the specified user.",
     });
   }
-  res.send(userOrderList)
-})
+  res.send(userOrderList);
+});
+
+router.get("/get/ordersCount", async (req, res) => {
+  try {
+    const orderCount = await Order.countDocuments();
+    if (!orderCount) return res.status(200).json(orderCount);
+    return res.status(200).json({ orderCount: orderCount });
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+});
 
 module.exports = router;

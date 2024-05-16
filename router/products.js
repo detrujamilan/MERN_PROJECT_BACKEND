@@ -3,30 +3,29 @@ const { Category } = require("../models/category");
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
-const { default: mongoose } = require("mongoose");
+const { default: mongoose, Mongoose } = require("mongoose");
 
 const IMG_FILE_TYPE = {
   "image/jpeg": "jpeg",
   "image/jpg": "jpg",
   "image/png": "png",
-}
-
+};
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const isValid = IMG_FILE_TYPE[file.mimetype]
-    let uploadError = new Error("Image upload error")
+    const isValid = IMG_FILE_TYPE[file.mimetype];
+    let uploadError = new Error("Image upload error");
     if (isValid) {
-      uploadError = null
+      uploadError = null;
     }
     cb(uploadError, "public/uploads");
   },
   filename: function (req, file, cb) {
-    const fileName = file.originalname.split(" ").join("-")
-    const extension = IMG_FILE_TYPE[file.mimetype]
-    cb(null, `${fileName}-${Date.now()}.${extension}`);
+    const fileName = file.originalname.split(" ").join("-");
+    const extension = IMG_FILE_TYPE[file.mimetype];
+    cb(null, `${fileName}`);
   },
-})
+});
 
 const uploadOptions = multer({ storage: storage });
 
@@ -41,54 +40,60 @@ router.get(`/`, async (req, res) => {
     .json({ message: "Product list fetched successfully.", productList });
 });
 
+router.put("/:id", uploadOptions.single("image"), async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      res.status(500).json({ message: "Failed to fetch product Id." });
+    }
 
-router.put("/:id", async (req, res) => {
-  if (!mongoose.isValidObjectId(req.params.id)) {
-    res.status(500).json({ message: "Failed to fetch product Id." });
+    const productId = await Product.findById(req.params.id);
+
+    if (!productId)
+      return res
+        .status(404)
+        .json({ message: `Product Id Not Found ${productId}` });
+
+    const file = req.file;
+    let imagePath;
+
+    if (file) {
+      const fileName = file.originalname.split(" ").join("-");
+      const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
+      imagePath = `${basePath}${fileName}`;
+    } else {
+      imagePath = productId.image;
+    }
+
+    const product = await Product.findByIdAndUpdate(req.params.id, {
+      name: req.body.name,
+      price: req.body.price,
+      countInStock: req.body.countInStock,
+      category: req.body.category,
+      description: req.body.description,
+      image: imagePath,
+    });
+
+    if (!product) {
+      res.status(404).json({ message: "Product not found." });
+    }
+
+    return res.send(product);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
-
-  const file = req.file;
-  let imageUpload;
-  if (file) {
-    const fileName = file.originalname.split(" ").join("-")
-    const basePath = `${req.protocol}://${req.get('host')}/public/uploads/`
-    imageUpload = `${basePath}${fileName}`
-  }
-
-
-  const product = await Product.findByIdAndUpdate(
-    req.params.id, {
-    name: req.body.name,
-    price: req.body.price,
-    countInStock: req.body.countInStock,
-    category: req.body.category,
-    description: req.body.description,
-    image: imageUpload
-  }
-  )
-
-  if (!product) {
-    res.status(404).json({ message: "Product not found." });
-  }
-
-  return express.response.send(product);
-
-
-})
+});
 
 router.post(`/`, uploadOptions.single("image"), async (req, res) => {
-
-  const categoryId = await Category.findById(req.body.category)
-  if (!categoryId) res.status(500).json({ message: "Failed to fetch category list." });
+  const categoryId = await Category.findById(req.body.category);
+  if (!categoryId)
+    res.status(500).json({ message: "Failed to fetch category list." });
 
   const file = req.file;
-  if (!file) return res.status(500).json({ message: "Image File not found." })
+  if (!file) return res.status(500).json({ message: "Image File not found." });
 
-  const fileName = req.file.originalname.split(" ").join("-")
-  console.log(fileName, "fileName")
+  const fileName = req.file.originalname.split(" ").join("-");
 
-  const basePath = `${req.protocol}://${req.get('host')}/public/uploads/`
-
+  const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
 
   const product = new Product({
     name: req.body.name,
@@ -131,15 +136,15 @@ router.delete(`/:id`, (req, res) => {
     });
 });
 
-router.get('/:id', async (req, res) => {
-  const productList = await Product.findById(req.params.id)
+router.get("/:id", async (req, res) => {
+  const productList = await Product.findById(req.params.id);
 
   if (!productList) {
     res.status(500).json({ message: "Failed to fetch product list." });
   }
 
-  res.send(productList)
-})
+  res.send(productList);
+});
 
 router.get(`/get/count`, async (req, res) => {
   try {
@@ -154,5 +159,41 @@ router.get(`/get/count`, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
+router.put(
+  "/gallery-images/:id",
+  uploadOptions.array("images", 10),
+  async (req, res) => {
+    if (!mongoose.isValidObjectId(res.params.id)) {
+      return res
+        .status(404)
+        .json({ message: `Product ID Not Found: ${req.params.id}` });
+    }
+
+    const files = req.file;
+    let imagesPath = [];
+    if (files) {
+      files.map((file) => {
+        return imagesPath.push(file.filename);
+      });
+    }
+
+    const product = await Product.findByIdAndUpdate(
+      req.params.id,
+      {
+        image: imagesPath,
+      },
+      {
+        new: true,
+      }
+    );
+
+    
+    if (!product)
+      return res.status(404).json({ message: "the Product cannot be updated" });
+
+    return res.send(product);
+  }
+);
 
 module.exports = router;
