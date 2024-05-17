@@ -23,7 +23,7 @@ const storage = multer.diskStorage({
   filename: function (req, file, cb) {
     const fileName = file.originalname.split(" ").join("-");
     const extension = IMG_FILE_TYPE[file.mimetype];
-    cb(null, `${fileName}`);
+    cb(null, `${fileName}-${Date.now()}.${extension}`);
   },
 });
 
@@ -83,42 +83,7 @@ router.put("/:id", uploadOptions.single("image"), async (req, res) => {
   }
 });
 
-router.post(`/`, uploadOptions.single("image"), async (req, res) => {
-  const categoryId = await Category.findById(req.body.category);
-  if (!categoryId)
-    res.status(500).json({ message: "Failed to fetch category list." });
 
-  const file = req.file;
-  if (!file) return res.status(500).json({ message: "Image File not found." });
-
-  const fileName = req.file.originalname.split(" ").join("-");
-
-  const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
-
-  const product = new Product({
-    name: req.body.name,
-    price: req.body.price,
-    countInStock: req.body.countInStock,
-    category: req.body.category,
-    description: req.body.description,
-    image: `${basePath}${fileName}`,
-  });
-
-  product
-    .save()
-    .then((createdProduct) => {
-      res.status(201).json({
-        message: "Product created successfully.",
-        product: createdProduct,
-      });
-    })
-    .catch((err) => {
-      res.status(500).json({
-        message: "Failed to create product.",
-        error: err,
-      });
-    });
-});
 
 router.delete(`/:id`, (req, res) => {
   Product.findByIdAndDelete(req.params.id)
@@ -160,35 +125,71 @@ router.get(`/get/count`, async (req, res) => {
   }
 });
 
+router.post(`/`, uploadOptions.single("image"), async (req, res) => {
+  const categoryId = await Category.findById(req.body.category);
+  if (!categoryId)
+    res.status(500).json({ message: "Failed to fetch category list." });
+
+  const file = req.file;
+  if (!file) return res.status(500).json({ message: "Image File not found." });
+
+  const fileName = req.file.originalname.split(" ").join("-");
+
+  const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
+
+  const product = new Product({
+    name: req.body.name,
+    price: req.body.price,
+    countInStock: req.body.countInStock,
+    category: req.body.category,
+    description: req.body.description,
+    image: `${basePath}${fileName}`,
+  });
+
+  product
+    .save()
+    .then((createdProduct) => {
+      res.status(201).json({
+        message: "Product created successfully.",
+        product: createdProduct,
+      });
+    })
+    .catch((err) => {
+      res.status(500).json({
+        message: "Failed to create product.",
+        error: err,
+      });
+    });
+});
+
 router.put(
   "/gallery-images/:id",
   uploadOptions.array("images", 10),
   async (req, res) => {
-    if (!mongoose.isValidObjectId(res.params.id)) {
+
+    if (!mongoose.isValidObjectId(req.params.id)) {
       return res
         .status(404)
-        .json({ message: `Product ID Not Found: ${req.params.id}` });
+        .json({ message: `Invalid Product Id ` });
     }
 
-    const files = req.file;
-    let imagesPath = [];
+    const files = req.files;
+
+    let imagesPaths = [];
+    let basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
     if (files) {
       files.map((file) => {
-        return imagesPath.push(file.filename);
+        return imagesPaths.push(`${basePath}${file.filename}`);
       });
     }
 
     const product = await Product.findByIdAndUpdate(
       req.params.id,
       {
-        image: imagesPath,
-      },
-      {
-        new: true,
+        images: imagesPaths,
       }
     );
 
-    
     if (!product)
       return res.status(404).json({ message: "the Product cannot be updated" });
 
