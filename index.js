@@ -7,10 +7,10 @@ const app = express();
 const authJwt = require("./helpers/jwt");
 const errorHandler = require("./helpers/error-hendler");
 
-
 // middleware
 app.use(express.json());
-app.use(express.urlencoded({extended: true}));
+app.use("/public/uploads", express.static(__dirname + "/public/uploads"));
+app.use(express.urlencoded({ extended: true }));
 app.use("*", cors());
 app.use(morgan("tiny"));
 app.use(authJwt());
