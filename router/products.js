@@ -24,6 +24,7 @@ const storage = multer.diskStorage({
     const fileName = file.originalname.split(" ").join("-");
     const extension = IMG_FILE_TYPE[file.mimetype];
     // cb(null, `${fileName}-${Date.now()}.${extension}`);
+    cb(null, `${fileName}`);
   },
 });
 
